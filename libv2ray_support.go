@@ -276,6 +276,10 @@ func (d *ProtectedDialer) Dial(ctx context.Context,
 	return d.fdConn(ctx, resolved.IPs[0], resolved.Port, fd)
 }
 
+func (d *ProtectedDialer) DestIpAddress() net.IP {
+	return d.vServer.currentIP()
+}
+
 func (d *ProtectedDialer) fdConn(ctx context.Context, ip net.IP, port int, fd int) (net.Conn, error) {
 
 	defer unix.Close(fd)
@@ -289,7 +293,7 @@ func (d *ProtectedDialer) fdConn(ctx context.Context, ip net.IP, port int, fd in
 	sa := &unix.SockaddrInet6{
 		Port: port,
 	}
-	copy(sa.Addr[:], ip)
+	copy(sa.Addr[:], ip.To16())
 
 	if err := unix.Connect(fd, sa); err != nil {
 		log.Printf("fdConn unix.Connect err, Close Fd: %d Err: %v", fd, err)
